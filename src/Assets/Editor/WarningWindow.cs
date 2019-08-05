@@ -4,16 +4,24 @@ using UnityEditor;
 public class WarningWindow : EditorWindow
 {
     private static string message;
+    private static WarningWindow window;
 
-    public static void Init(string message)
+    public static void Show(string message)
     {
         WarningWindow.message = message;
-        WarningWindow window = (WarningWindow)EditorWindow.GetWindow(typeof(WarningWindow));
+        window = (WarningWindow)EditorWindow.GetWindow(typeof(WarningWindow), true, "Warning", true);
         window.Show();
     }
 
     void OnGUI()
     {
-        GUILayout.Label(WarningWindow.message, EditorStyles.boldLabel);
+        GUILayout.Label("Warning, Locked Files!", EditorStyles.boldLabel);
+        GUILayout.Label(WarningWindow.message);
+        GUILayout.Space(10f);
+        GitLocksWarning.dontShowAgain = GUILayout.Toggle(GitLocksWarning.dontShowAgain, "Don't Show Again");
+        GUILayout.Space(10f);
+        if(GUILayout.Button("Okay")) {
+            window.Close();
+        }
     }
 }

@@ -1,23 +1,38 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Text;
 
 public class GitLocksWarning : UnityEditor.AssetModificationProcessor {
-  private static string[] OnWillSaveAssets(string[] paths) {
-    WarningWindow.Init("OnWillSaveAssets");
+  public static bool dontShowAgain;
 
-    ProcessStartInfo processStartInfo = new ProcessStartInfo(); 
-    processStartInfo.FileName = Application.dataPath+"/git-locks.sh";
-    // processStartInfo.FileName = System.IO.Path.GetFullPath("Packages/com.jamie-tucker.git-locks/git-locks.sh");
+  private static void OnWillSaveAssets(string[] paths) {
+    Process process;
+    string standardOutput;
+    bool fileIsLocked = false;
+    StringBuilder output = new StringBuilder();
 
-    Process process = Process.Start(processStartInfo); 
-    string strOutput = process.StandardOutput.ReadToEnd(); 
-    process.WaitForExit(); 
-    UnityEngine.Debug.Log(strOutput);
+    ProcessStartInfo processStartInfo = new ProcessStartInfo() {
+        FileName = "/usr/local/bin/git-lfs",
+        UseShellExecute = false,
+        RedirectStandardError = true,
+        RedirectStandardInput = true,
+        RedirectStandardOutput = true,
+        CreateNoWindow = true,
+        Arguments = "locks"
+    }; 
 
-    foreach (string path in paths)
-      UnityEngine.Debug.Log(path);
-    return paths;
+    process = Process.Start(processStartInfo); 
+    standardOutput = process.StandardOutput.ReadToEnd(); 
+    process.WaitForExit();
+
+    foreach (string path in paths) {
+      if(standardOutput.Contains(path)) {
+        fileIsLocked = true;
+        output.Append(path+"\n");
+      }
+    }
+
+    if(fileIsLocked && !dontShowAgain) {
+        WarningWindow.Show(output.ToString());
+    }
   }
 }
