@@ -3,25 +3,53 @@ using UnityEditor;
 
 public class WarningWindow : EditorWindow
 {
-    private static string message;
-    private static WarningWindow window;
+  private const string MENU_NAME = "Developer/Show Git Lock Warning";
 
-    public static void Show(string message)
-    {
-        WarningWindow.message = message;
-        window = (WarningWindow)EditorWindow.GetWindow(typeof(WarningWindow), true, "Warning", true);
-        window.Show();
-    }
+  public static bool DontShowAgain
+  {
+    get;
+    private set;
+  }
 
-    void OnGUI()
+  private static string message;
+  private static WarningWindow window;
+  private static GUIStyle richStyle = EditorStyles.boldLabel;
+
+  public static void Show(string message)
+  {
+    EditorStyles.boldLabel.richText = true;
+    EditorStyles.label.richText = true;
+    WarningWindow.message = message;
+    window = (WarningWindow)EditorWindow.GetWindow(typeof(WarningWindow), true, "Warning", true);
+    window.Show();
+  }
+
+  void OnGUI()
+  {
+    GUILayout.Label("<b><color=yellow>WARNING</color></b>", EditorStyles.boldLabel);
+    GUILayout.Label(WarningWindow.message, EditorStyles.label);
+    GUILayout.Space(24f);
+    DontShowAgain = GUILayout.Toggle(DontShowAgain, "Don't Show Again");
+    GUILayout.Space(12f);
+    if (GUILayout.Button("Okay"))
     {
-        GUILayout.Label("Warning, Locked Files!", EditorStyles.boldLabel);
-        GUILayout.Label(WarningWindow.message);
-        GUILayout.Space(10f);
-        GitLocksWarning.dontShowAgain = GUILayout.Toggle(GitLocksWarning.dontShowAgain, "Don't Show Again");
-        GUILayout.Space(10f);
-        if(GUILayout.Button("Okay")) {
-            window.Close();
-        }
+      window.Close();
     }
+  }
+
+  #region Menu
+  [MenuItem(MENU_NAME)]
+  private static void ToggleGitLock()
+  {
+    DontShowAgain = !DontShowAgain;
+    Menu.SetChecked(MENU_NAME, !DontShowAgain);
+  }
+
+  [MenuItem(MENU_NAME, true)]
+  private static bool ToggleGitLockValidate()
+  {
+    Menu.SetChecked(MENU_NAME, !DontShowAgain);
+    return true;
+  }
+  #endregion
 }
