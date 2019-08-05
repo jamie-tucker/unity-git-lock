@@ -1,7 +1,11 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using UnityEngine;
+using UnityEditor;
 
 public class GitLocksWarning : UnityEditor.AssetModificationProcessor {
+  private const string MenuName = "Developer/Show Git Lock Warning";
+
   public static bool dontShowAgain;
 
   private static void OnWillSaveAssets(string[] paths) {
@@ -35,4 +39,17 @@ public class GitLocksWarning : UnityEditor.AssetModificationProcessor {
         WarningWindow.Show(output.ToString());
     }
   }
+
+    [MenuItem(MenuName)]
+    private static void ToggleGitLock() {
+        dontShowAgain = !dontShowAgain;
+        Menu.SetChecked(MenuName, !dontShowAgain);
+    }
+
+    [MenuItem(MenuName, true)]
+    private static bool ToggleGitLockValidate()
+    {
+        Menu.SetChecked(MenuName, !dontShowAgain);
+        return true;
+    }
 }
