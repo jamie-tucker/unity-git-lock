@@ -6,15 +6,43 @@ using UnityEditor;
 
 public class GitLocksWarning : UnityEditor.AssetModificationProcessor
 {
-  private const int TIMEOUT = 1000;
+  private const int TIMEOUT = 3000;
   private const string FILE_NAME = "/usr/local/bin/git-lfs"; // which git-lfs
   private const string ARGS = "locks"; // can also use --json and parse the output for better information display.
 
   private static void OnWillSaveAssets(string[] paths)
   {
-    string standardOutput = string.Empty;
+    string processOutput = string.Empty;
     bool fileIsLocked = false;
     StringBuilder output = new StringBuilder("YOU ARE EDITING A LOCKED FILE!\n");
+
+    processOutput = RunProcess(FILE_NAME, ARGS);
+
+    if (!string.IsNullOrEmpty(processOutput))
+    {
+      UnityEngine.Debug.LogWarning(output);
+
+      foreach (string path in paths)
+      {
+        if (processOutput.Contains(path))
+        {
+          fileIsLocked = true;
+          string file = "\n<color=cyan>" + path + "</color>";
+          UnityEngine.Debug.Log(file);
+          output.Append(file);
+        }
+      }
+
+      if (fileIsLocked && !WarningWindow.DontShowAgain)
+      {
+        WarningWindow.Show(output.ToString());
+      }
+    }
+  }
+
+  private static string RunProcess(string fileName, string args)
+  {
+    string standardOutput = string.Empty;
 
     try
     {
@@ -22,11 +50,11 @@ public class GitLocksWarning : UnityEditor.AssetModificationProcessor
       {
         ProcessStartInfo processStartInfo = new ProcessStartInfo()
         {
-          FileName = FILE_NAME,
+          FileName = fileName,
           UseShellExecute = false,
           RedirectStandardOutput = true,
           CreateNoWindow = true,
-          Arguments = ARGS
+          Arguments = args
         };
         process.StartInfo = processStartInfo;
         process.Start();
@@ -50,25 +78,6 @@ public class GitLocksWarning : UnityEditor.AssetModificationProcessor
       UnityEngine.Debug.LogError(e);
     }
 
-    if (!string.IsNullOrEmpty(standardOutput))
-    {
-      UnityEngine.Debug.LogWarning(output);
-
-      foreach (string path in paths)
-      {
-        if (standardOutput.Contains(path))
-        {
-          fileIsLocked = true;
-          string file = "\n<color=cyan>" + path + "</color>";
-          UnityEngine.Debug.Log(file);
-          output.Append(file);
-        }
-      }
-
-      if (fileIsLocked && !WarningWindow.DontShowAgain)
-      {
-        WarningWindow.Show(output.ToString());
-      }
-    }
+    return standardOutput;
   }
 }
