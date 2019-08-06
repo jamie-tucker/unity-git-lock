@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Text;
-using UnityEngine;
-using UnityEditor;
 
 public class GitLocksWarning : UnityEditor.AssetModificationProcessor
 {
